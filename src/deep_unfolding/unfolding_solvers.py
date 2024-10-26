@@ -13,34 +13,43 @@ from torch import Tensor
 from .utils import _decompose_matrix, _device
 
 # Create a logger for this module
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class UnfoldingNet(nn.Module):
 
-    A: Tensor
+    _A: Tensor
     """Matrix $A$ of the linear system."""
 
-    D: Tensor
-    """Diagonal matrix $D$."""
-
-    L: Tensor
-    """Lower triangular matrix $L$."""
-
-    U: Tensor
-    """Upper triangular matrix $U$."""
-
-    H: Tensor
+    _H: Tensor
     """Matrix $H$."""
 
-    Dinv: Tensor
-    """Inverse of the diagonal matrix $D$."""
-
-    bs: int
+    _bs: int
     """Batch size."""
 
-    y: Tensor
+    _y: Tensor
     """Solution of the linear equation."""
+
+    _D: Tensor
+    """Diagonal matrix $D$."""
+
+    _L: Tensor
+    """Lower triangular matrix $L$."""
+
+    _U: Tensor
+    """Upper triangular matrix $U$."""
+
+    _Dinv: Tensor
+    """Inverse of the diagonal matrix $D$."""
+
+    _device: torch.device
+    """Device where to run the model."""
+
+    _solved: bool
+    """Flag indicating whether the problem has been solved yet."""
+
+    _s_hats: list[Tensor]
+    """Solutions obtained through the several solver iterations."""
 
     def __init__(
         self,
@@ -52,18 +61,20 @@ class UnfoldingNet(nn.Module):
     ):
 
         super().__init__()
-        self.device = device
+        self._device = device
 
         a, d, l, u, _, _ = _decompose_matrix(a, device)  # noqa: E741
 
-        self.A = a.to(device)
-        self.D = d.to(device)
-        self.L = l.to(device)
-        self.U = u.to(device)
-        self.H = h.to(device)
-        self.Dinv = torch.linalg.inv(d).to(device)
-        self.bs = bs
-        self.y = y.to(device)
+        self._A = a.to(device)
+        self._D = d.to(device)
+        self._L = l.to(device)
+        self._U = u.to(device)
+        self._H = h.to(device)
+        self._Dinv = torch.linalg.inv(d).to(device)
+        self._bs = bs
+        self._y = y.to(device)
+
+        _logger.info(f"Code run on : {_device}")
 
     def deep_train(
         self,
@@ -127,7 +138,7 @@ class UnfoldingNet(nn.Module):
         s_hat, _ = self(num_itr)
 
         err = (torch.norm(solution.to(device) - s_hat.to(device)) ** 2).item() / (
-            self.A.shape[0] * self.bs
+            self._A.shape[0] * self._bs
         )
         return err
 
@@ -176,14 +187,14 @@ class SORNet(UnfoldingNet):
         """
         traj = []
 
-        m_inv = torch.linalg.inv(self.inv_omega * self.D + self.L)
-        s = torch.zeros(self.bs, self.H.size(0), device=self.device)
+        m_inv = torch.linalg.inv(self.inv_omega * self._D + self._L)
+        s = torch.zeros(self._bs, self._H.size(0), device=self.device)
         traj.append(s)
-        yMF = torch.matmul(self.y, self.H.T)
-        s = torch.matmul(yMF, self.Dinv)
+        yMF = torch.matmul(self._y, self._H.T)
+        s = torch.matmul(yMF, self._Dinv)
 
         for _ in range(num_itr):
-            temp = torch.matmul(s, (self.inv_omega - 1) * self.D - self.U) + yMF
+            temp = torch.matmul(s, (self.inv_omega - 1) * self._D - self._U) + yMF
             s = torch.matmul(temp, m_inv)
             traj.append(s)
 
@@ -254,19 +265,21 @@ class SORChebyNet(UnfoldingNet):
         """
         traj = []
 
-        m_inv = torch.linalg.inv(self.inv_omega * self.D + self.L)
-        s = torch.zeros(self.bs, self.H.size(0), device=self.device)  # modif to size(0)
+        m_inv = torch.linalg.inv(self.inv_omega * self._D + self._L)
+        s = torch.zeros(
+            self._bs, self._H.size(0), device=self.device
+        )  # modif to size(0)
         s_new = torch.zeros(
-            self.bs, self.H.size(0), device=self.device
+            self._bs, self._H.size(0), device=self.device
         )  # modif to size(0)
         traj.append(s)
-        yMF = torch.matmul(self.y, self.H.T)
-        s = torch.matmul(yMF, self.Dinv)
+        yMF = torch.matmul(self._y, self._H.T)
+        s = torch.matmul(yMF, self._Dinv)
         s_present = s
         s_old = torch.zeros_like(s_present)
 
         for i in range(num_itr):
-            temp = torch.matmul(s, (self.inv_omega - 1) * self.D - self.U) + yMF
+            temp = torch.matmul(s, (self.inv_omega - 1) * self._D - self._U) + yMF
             s = torch.matmul(temp, m_inv)
 
             s_new = (
@@ -333,18 +346,18 @@ class AORNet(UnfoldingNet):
         """
         traj = []
 
-        m_inv = torch.linalg.inv(self.L - self.r * self.D)
+        m_inv = torch.linalg.inv(self._L - self.r * self._D)
         n = (
-            (1 - self.omega) * self.D
-            + (self.omega - self.r) * self.L
-            + self.omega * self.U
+            (1 - self.omega) * self._D
+            + (self.omega - self.r) * self._L
+            + self.omega * self._U
         )
         s = torch.zeros(
-            self.bs, self.H.size(0), device=self.device
+            self._bs, self._H.size(0), device=self.device
         )  # change to size(0)
         traj.append(s)
-        yMF = torch.matmul(self.y, self.H.T)
-        s = torch.matmul(yMF, self.Dinv)
+        yMF = torch.matmul(self._y, self._H.T)
+        s = torch.matmul(yMF, self._Dinv)
 
         for _ in range(num_itr):
             s = torch.matmul(s, torch.matmul(m_inv, n)) + torch.matmul(yMF, m_inv)
@@ -394,13 +407,13 @@ class RichardsonNet(UnfoldingNet):
         """
         traj = []
 
-        s = torch.zeros(self.bs, self.A.shape[0], device=self.device)
+        s = torch.zeros(self._bs, self._A.shape[0], device=self._device)
         traj.append(s)
-        yMF = torch.matmul(self.y, self.H.T)
-        s = torch.matmul(yMF, self.Dinv)
+        yMF = torch.matmul(self._y, self._H.T)
+        s = torch.matmul(yMF, self._Dinv)
 
         for _ in range(num_itr):
-            s = s + self.inv_omega * (yMF - torch.matmul(s, self.A))
+            s = s + self.inv_omega * (yMF - torch.matmul(s, self._A))
             traj.append(s)
 
         return s, traj
