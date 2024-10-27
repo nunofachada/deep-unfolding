@@ -25,14 +25,14 @@ def test_SORNet_initialization(generate_matrices):
     A, H, y, n, m, bs, solution = generate_matrices
     model = SORNet(A, H, bs, y, device=_device)
 
-    assert model.A.shape == (n, n), "Attribute A should have the correct shape"
-    assert model.H.shape == (n, m), "Attribute H should have the correct shape"
-    assert model.D.shape == (n, n), "Attribute D should have the correct shape"
-    assert model.L.shape == (n, n), "Attribute L should have the correct shape"
-    assert model.U.shape == (n, n), "Attribute U should have the correct shape"
-    assert model.Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
-    assert model.bs == bs, "Attribute bs should be initialized correctly"
-    assert model.y.shape == (bs, m), "Attribute y should have the correct shape"
+    assert model._A.shape == (n, n), "Attribute A should have the correct shape"
+    assert model._H.shape == (n, m), "Attribute H should have the correct shape"
+    assert model._D.shape == (n, n), "Attribute D should have the correct shape"
+    assert model._L.shape == (n, n), "Attribute L should have the correct shape"
+    assert model._U.shape == (n, n), "Attribute U should have the correct shape"
+    assert model._Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
+    assert model._bs == bs, "Attribute bs should be initialized correctly"
+    assert model._y.shape == (bs, m), "Attribute y should have the correct shape"
     assert torch.is_tensor(model.inv_omega), "Attribute inv_omega should be a tensor"
 
 
@@ -55,14 +55,14 @@ def test_SOR_CHEBY_Net_initialization(generate_matrices):
     A, H, y, n, m, bs, solution = generate_matrices
     model = SORChebyNet(num_itr, A, H, bs, y, device=_device)
 
-    assert model.A.shape == (n, n), "Attribute A should have the correct shape"
-    assert model.H.shape == (n, m), "Attribute H should have the correct shape"
-    assert model.D.shape == (n, n), "Attribute D should have the correct shape"
-    assert model.L.shape == (n, n), "Attribute L should have the correct shape"
-    assert model.U.shape == (n, n), "Attribute U should have the correct shape"
-    assert model.Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
-    assert model.bs == bs, "Attribute bs should be initialized correctly"
-    assert model.y.shape == (bs, m), "Attribute y should have the correct shape"
+    assert model._A.shape == (n, n), "Attribute A should have the correct shape"
+    assert model._H.shape == (n, m), "Attribute H should have the correct shape"
+    assert model._D.shape == (n, n), "Attribute D should have the correct shape"
+    assert model._L.shape == (n, n), "Attribute L should have the correct shape"
+    assert model._U.shape == (n, n), "Attribute U should have the correct shape"
+    assert model._Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
+    assert model._bs == bs, "Attribute bs should be initialized correctly"
+    assert model._y.shape == (bs, m), "Attribute y should have the correct shape"
     assert torch.is_tensor(model.inv_omega), "Attribute inv_omega should be a tensor"
     assert model.gamma.shape == (
         num_itr,
@@ -94,14 +94,14 @@ def test_AORNet_initialization(generate_matrices):
     A, H, y, n, m, bs, solution = generate_matrices
     model = AORNet(A, H, bs, y, device=_device)
 
-    assert model.A.shape == (n, n), "Attribute A should have the correct shape"
-    assert model.H.shape == (n, m), "Attribute H should have the correct shape"
-    assert model.D.shape == (n, n), "Attribute D should have the correct shape"
-    assert model.L.shape == (n, n), "Attribute L should have the correct shape"
-    assert model.U.shape == (n, n), "Attribute U should have the correct shape"
-    assert model.Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
-    assert model.bs == bs, "Attribute bs should be initialized correctly"
-    assert model.y.shape == (bs, m), "Attribute y should have the correct shape"
+    assert model._A.shape == (n, n), "Attribute A should have the correct shape"
+    assert model._H.shape == (n, m), "Attribute H should have the correct shape"
+    assert model._D.shape == (n, n), "Attribute D should have the correct shape"
+    assert model._L.shape == (n, n), "Attribute L should have the correct shape"
+    assert model._U.shape == (n, n), "Attribute U should have the correct shape"
+    assert model._Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
+    assert model._bs == bs, "Attribute bs should be initialized correctly"
+    assert model._y.shape == (bs, m), "Attribute y should have the correct shape"
     assert torch.is_tensor(model.r), "Attribute r should be a tensor"
     assert torch.is_tensor(model.omega), "Attribute omega should be a tensor"
 
@@ -124,14 +124,14 @@ def test_RINet_initialization(generate_matrices):
     A, H, y, n, m, bs, solution = generate_matrices
     model = RichardsonNet(A, H, bs, y, device=_device)
 
-    assert model.A.shape == (n, n), "Attribute A should have the correct shape"
-    assert model.H.shape == (n, m), "Attribute H should have the correct shape"
-    assert model.D.shape == (n, n), "Attribute D should have the correct shape"
-    assert model.L.shape == (n, n), "Attribute L should have the correct shape"
-    assert model.U.shape == (n, n), "Attribute U should have the correct shape"
-    assert model.Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
-    assert model.bs == bs, "Attribute bs should be initialized correctly"
-    assert model.y.shape == (bs, m), "Attribute y should have the correct shape"
+    assert model._A.shape == (n, n), "Attribute A should have the correct shape"
+    assert model._H.shape == (n, m), "Attribute H should have the correct shape"
+    assert model._D.shape == (n, n), "Attribute D should have the correct shape"
+    assert model._L.shape == (n, n), "Attribute L should have the correct shape"
+    assert model._U.shape == (n, n), "Attribute U should have the correct shape"
+    assert model._Dinv.shape == (n, n), "Attribute Dinv should have the correct shape"
+    assert model._bs == bs, "Attribute bs should be initialized correctly"
+    assert model._y.shape == (bs, m), "Attribute y should have the correct shape"
     assert torch.is_tensor(model.inv_omega), "Attribute inv_omega should be a tensor"
 
 
