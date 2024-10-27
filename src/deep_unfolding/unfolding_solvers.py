@@ -42,7 +42,7 @@ class UnfoldingNet(nn.Module):
     _Dinv: Tensor
     """Inverse of the diagonal matrix $D$."""
 
-    _device: torch.device
+    device: torch.device
     """Device where to run the model."""
 
     _solved: bool
@@ -61,7 +61,7 @@ class UnfoldingNet(nn.Module):
     ):
 
         super().__init__()
-        self._device = device
+        self.device = device
 
         a, d, l, u, _, _ = _decompose_matrix(a, device)  # noqa: E741
 
@@ -74,13 +74,12 @@ class UnfoldingNet(nn.Module):
         self._bs = bs
         self._y = y.to(device)
 
-        _logger.info(f"Code run on : {_device}")
+        _logger.info(f"Code run on : {device}")
 
     def deep_train(
         self,
         optimizer: torch.optim.Optimizer,
         loss_func: torch.nn.Module,
-        A: Tensor,
         b: Tensor,
         total_itr: int = 25,
         num_batch: int = 10000,
@@ -91,7 +90,6 @@ class UnfoldingNet(nn.Module):
           optimizer: The optimizer to use for training.
           loss_func: The loss function to use for training.
           total_itr: The total number of iterations (generations) for training.
-          A: The initial matrix.
           b: The solution of the linear problem
           num_batch: The number of batches per iteration.
 
@@ -103,7 +101,7 @@ class UnfoldingNet(nn.Module):
             for i in range(num_batch):
                 optimizer.zero_grad()
                 x_hat, _ = self(gen + 1)
-                loss = loss_func(A * x_hat, b)  # to avoid using the solution
+                loss = loss_func(self._A * x_hat, b)  # to avoid using the solution
                 loss.backward()
                 optimizer.step()
 
@@ -123,7 +121,6 @@ class UnfoldingNet(nn.Module):
         self,
         solution: Tensor,
         num_itr: int = 10,
-        device: torch.device = _device,
     ) -> float:
         """Evaluate function
 
@@ -137,7 +134,7 @@ class UnfoldingNet(nn.Module):
         """
         s_hat, _ = self(num_itr)
 
-        err = (torch.norm(solution.to(device) - s_hat.to(device)) ** 2).item() / (
+        err = (torch.norm(solution.to(self.device) - s_hat.to(self.device)) ** 2).item() / (
             self._A.shape[0] * self._bs
         )
         return err
@@ -145,9 +142,6 @@ class UnfoldingNet(nn.Module):
 
 class SORNet(UnfoldingNet):
     """Deep unfolded SOR with a constant step size."""
-
-    device: torch.device
-    """Device to run the model on."""
 
     inv_omega: nn.Parameter
     """Inverse of the relaxation parameter omega."""
@@ -203,9 +197,6 @@ class SORNet(UnfoldingNet):
 
 class SORChebyNet(UnfoldingNet):
     """Deep unfolded SOR with Chebyshev acceleration."""
-
-    device: torch.device
-    """Device to run the model on."""
 
     gamma: nn.Parameter
     """Gamma parameter for each iteration."""
@@ -298,9 +289,6 @@ class SORChebyNet(UnfoldingNet):
 
 class AORNet(UnfoldingNet):
     """Deep unfolded AOR with a constant step size."""
-
-    device: torch.device
-    """Device to run the model on."""
 
     r: nn.Parameter
     """Parameter `r` for AOR."""
